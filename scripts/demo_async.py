@@ -14,7 +14,7 @@ async def bloqueante():
 @app.get("/demo/async")
 async def asincrono():
     await asyncio.sleep(2)
-    return {"tipo": "async def + await async.sleep"}
+    return {"tipo": "async def + await asyncio.sleep"}
 
 @app.get("/demo/sync")
 def sincrono():

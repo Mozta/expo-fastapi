@@ -1,5 +1,6 @@
 from app.schemas import Categoria, Evaluacion, EvaluacionIn, Proyecto, ProyectoIn, Resumen
 
+#TODO: Cambiar despues a SQLModel
 class RepositoryMemory:
     def __init__(self) -> None:
         self.proyectos: dict[int, Proyecto] = {}

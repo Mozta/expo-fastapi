@@ -17,22 +17,37 @@ pip install -r requirements.txt
 ## Ejecutar
 
 ```bash
-fastapi dev main.py
+fastapi dev app/main.py
 ```
 
 El servidor queda en http://127.0.0.1:8000 y la documentación interactiva en http://127.0.0.1:8000/docs.
 
+## Estructura
+
+```
+app/
+├── main.py            # crea la app y monta los routers bajo /api/v1
+├── schemas.py         # modelos Pydantic (entrada/salida)
+├── repository.py      # almacenamiento en memoria (RepositoryMemory)
+├── dependencies.py    # buscar_proyecto: dependencia que responde 404
+└── routers/
+    ├── projects.py    # /proyectos y /proyectos/{id}/resumen
+    └── evaluations.py # /proyectos/{id}/evaluaciones
+```
+
 ## Endpoints
+
+Todas las rutas, salvo `/`, van bajo el prefijo `/api/v1`.
 
 | Método | Ruta | Descripción |
 | ------ | ---- | ----------- |
 | GET | `/` | Mensaje de bienvenida |
-| POST | `/proyectos` | Crea un proyecto (responde 201) |
-| GET | `/proyectos` | Lista proyectos. Parámetros opcionales: `categoria` y `limite` (1–100, por defecto 10) |
-| GET | `/proyectos/{proyecto_id}` | Obtiene un proyecto por id (404 si no existe) |
-| POST | `/proyectos/{proyecto_id}/evaluaciones` | Registra una evaluación del proyecto (201; 404 si el proyecto no existe) |
-| GET | `/proyectos/{proyecto_id}/evaluaciones` | Lista las evaluaciones del proyecto |
-| GET | `/proyectos/{proyecto_id}/resumen` | Promedio por criterio y promedio general (`null` si aún no hay evaluaciones) |
+| POST | `/api/v1/proyectos` | Crea un proyecto (responde 201) |
+| GET | `/api/v1/proyectos` | Lista proyectos. Parámetros opcionales: `categoria` y `limite` (1–100, por defecto 10) |
+| GET | `/api/v1/proyectos/{proyecto_id}` | Obtiene un proyecto por id (404 si no existe) |
+| POST | `/api/v1/proyectos/{proyecto_id}/evaluaciones` | Registra una evaluación del proyecto (201; 404 si el proyecto no existe) |
+| GET | `/api/v1/proyectos/{proyecto_id}/evaluaciones` | Lista las evaluaciones del proyecto (404 si el proyecto no existe) |
+| GET | `/api/v1/proyectos/{proyecto_id}/resumen` | Promedio por criterio y promedio general (`null` si aún no hay evaluaciones) |
 
 Categorías válidas: `Software`, `Hardware`, `Impacto social`, `Inteligencia Artificial`.
 
@@ -41,11 +56,11 @@ Una evaluación lleva `evaluador` (3 a 80 caracteres), `innovacion`, `viabilidad
 Ejemplo:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/proyectos \
+curl -X POST http://127.0.0.1:8000/api/v1/proyectos \
   -H "Content-Type: application/json" \
   -d '{"nombre": "Robot clasificador", "equipo": ["Ana", "Luis"], "categoria": "Hardware"}'
 
-curl -X POST http://127.0.0.1:8000/proyectos/1/evaluaciones \
+curl -X POST http://127.0.0.1:8000/api/v1/proyectos/1/evaluaciones \
   -H "Content-Type: application/json" \
   -d '{"evaluador": "Dra. López", "innovacion": 9, "viabilidad": 7, "presentacion": 8}'
 ```
