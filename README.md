@@ -14,6 +14,16 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+## Base de datos
+
+La API guarda los datos con SQLModel. La conexión se lee de la variable `DATABASE_URL` (desde el entorno o desde un archivo `.env` en la raíz):
+
+```bash
+cp .env.example .env   # y ajusta usuario, contraseña, puerto y base de datos
+```
+
+Si no hay `DATABASE_URL`, se usa SQLite en `./expo.db`. Las tablas se crean solas al arrancar el servidor. Con `SQL_ECHO=true` se imprimen en consola las consultas SQL.
+
 ## Ejecutar
 
 ```bash
@@ -27,9 +37,14 @@ El servidor queda en http://127.0.0.1:8000 y la documentación interactiva en ht
 ```
 app/
 ├── main.py            # crea la app y monta los routers bajo /api/v1
-├── schemas.py         # modelos Pydantic (entrada/salida)
-├── repository.py      # almacenamiento en memoria (RepositoryMemory)
-├── dependencies.py    # buscar_proyecto: dependencia que responde 404
+├── config.py          # Settings: DATABASE_URL y SQL_ECHO (pydantic-settings)
+├── database.py        # engine, crear_tablas() y la sesión por petición (SessionDep)
+├── models.py          # tablas SQLModel: ProyectoDB y EvaluacionDB
+├── schemas.py         # modelos Pydantic (entrada/salida de la API)
+├── repository_sql.py  # RepositorySQL: consultas con SQLModel
+├── repository.py      # RepositoryMemory: versión anterior en memoria (referencia)
+├── errors.py          # Conflicto: se responde como 409
+├── dependencies.py    # RepositorioDep y ProyectoDep (404 si no existe)
 └── routers/
     ├── projects.py    # /proyectos y /proyectos/{id}/resumen
     └── evaluations.py # /proyectos/{id}/evaluaciones
@@ -42,7 +57,7 @@ Todas las rutas, salvo `/`, van bajo el prefijo `/api/v1`.
 | Método | Ruta | Descripción |
 | ------ | ---- | ----------- |
 | GET | `/` | Mensaje de bienvenida |
-| POST | `/api/v1/proyectos` | Crea un proyecto (responde 201) |
+| POST | `/api/v1/proyectos` | Crea un proyecto (201; 409 si ya existe otro con el mismo nombre) |
 | GET | `/api/v1/proyectos` | Lista proyectos. Parámetros opcionales: `categoria` y `limite` (1–100, por defecto 10) |
 | GET | `/api/v1/proyectos/{proyecto_id}` | Obtiene un proyecto por id (404 si no existe) |
 | POST | `/api/v1/proyectos/{proyecto_id}/evaluaciones` | Registra una evaluación del proyecto (201; 404 si el proyecto no existe) |
@@ -65,7 +80,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/proyectos/1/evaluaciones \
   -d '{"evaluador": "Dra. López", "innovacion": 9, "viabilidad": 7, "presentacion": 8}'
 ```
 
-Los datos se guardan en memoria, así que se pierden al reiniciar el servidor.
+El nombre del proyecto es único y los datos persisten en la base de datos entre reinicios.
 
 ## Demo de concurrencia
 
