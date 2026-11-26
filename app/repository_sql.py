@@ -2,13 +2,33 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, func, select
 
 from app.errors import Conflicto
-from app.models import EvaluacionDB, ProyectoDB
-from app.schemas import Categoria, EvaluacionIn, ProyectoIn, Resumen
+from app.models import EvaluacionDB, ProyectoDB, UsuarioDB
+from app.schemas import Categoria, EvaluacionIn, ProyectoIn, Resumen, UsuarioIn
+from app.security import hashear_password
 
 
 class RepositorySQL:
     def __init__(self, session: Session) -> None:
         self.session = session
+
+    def crear_usuario(self, datos: UsuarioIn) -> UsuarioDB:
+        usuario = UsuarioDB(
+            correo=datos.correo,
+            nombre=datos.nombre,
+            password_hash=hashear_password(datos.password),
+        )
+        self.session.add(usuario)
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+            raise Conflicto(f"Ya existe un usuario con el correo: {datos.correo}")
+        self.session.refresh(usuario)
+        return usuario
+
+    def obtener_usuario_por_correo(self, correo: str) -> UsuarioDB | None:
+        return self.session.exec(select(UsuarioDB).where(UsuarioDB.correo == correo)).first()
+
 
     # Proyectos
     def crear_proyecto(self, datos: ProyectoIn) -> ProyectoDB:

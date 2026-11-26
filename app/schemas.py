@@ -1,6 +1,29 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
+# Usuarios y autenticación
+class Rol(str, Enum):
+    evaluador = "evaluador"
+    admin = "admin"
+
+class UsuarioIn(BaseModel):
+    correo: EmailStr
+    nombre: str = Field(min_length=3, max_length=80)
+    password: str = Field(min_length=8, max_length=128)
+
+class Usuario(BaseModel):
+    id: int
+    correo: EmailStr
+    nombre: str
+    rol: Rol
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+
+# Categoria, proyectos, evaluaciones
 class Categoria(str, Enum):
     software = "Software"
     hardware = "Hardware"
